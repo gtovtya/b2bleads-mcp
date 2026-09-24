@@ -1,0 +1,36 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.gtovtya/b2bleads-mcp",
+  "description": "MCP server for B2BLeads — real-time B2B company discovery and enrichment as an MCP tool for Claude, Cursor, and other MCP-compatible agents.",
+  "repository": {
+    "url": "https://github.com/gtovtya/b2bleads-mcp",
+    "source": "github"
+  },
+  "version": "1.1.0",
+  "packages": [
+    {
+      "registryType": "npm",
+      "identifier": "b2bleads-mcp",
+      "version": "1.1.0",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "description": "Your B2BLeads API key, from https://b2bleadsapi.com/app/integrations",
+          "isRequired": true,
+          "format": "string",
+          "isSecret": true,
+          "name": "B2BLEADS_API_KEY"
+        },
+        {
+          "description": "Override the B2BLeads API base URL (defaults to https://api.b2bleadsapi.com)",
+          "isRequired": false,
+          "format": "string",
+          "isSecret": false,
+          "name": "B2BLEADS_API_URL"
+        }
+      ]
+    }
+  ]
+}

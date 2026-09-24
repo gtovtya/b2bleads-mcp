@@ -1,7 +1,7 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.gtovtya/b2bleads-mcp",
-  "description": "MCP server for B2BLeads — real-time B2B company discovery and enrichment as an MCP tool for Claude, Cursor, and other MCP-compatible agents.",
+  "description": "Search and enrich B2B business leads by industry and city.",
   "repository": {
     "url": "https://github.com/gtovtya/b2bleads-mcp",
     "source": "github"

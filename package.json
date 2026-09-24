@@ -1,0 +1,44 @@
+{
+  "name": "b2bleads-mcp",
+  "version": "1.0.0",
+  "description": "MCP server for B2BLeads — real-time B2B company discovery and enrichment as an MCP tool for Claude, Cursor, and other MCP-compatible agents.",
+  "type": "module",
+  "main": "src/index.js",
+  "bin": {
+    "b2bleads-mcp": "bin/b2bleads-mcp.js"
+  },
+  "files": [
+    "bin",
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "start": "node bin/b2bleads-mcp.js"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "b2b",
+    "leads",
+    "sales",
+    "claude",
+    "ai-agent"
+  ],
+  "author": "B2BLeads",
+  "license": "MIT",
+  "homepage": "https://b2bleadsapi.com",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gtovtya/b2bleads-mcp.git"
+  },
+  "bugs": {
+    "url": "https://github.com/gtovtya/b2bleads-mcp/issues"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.0"
+  }
+}

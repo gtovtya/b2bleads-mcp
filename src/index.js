@@ -109,6 +109,29 @@ const LIST_INDUSTRIES_TOOL = {
   inputSchema: { type: "object", properties: {} },
 }
 
+const LIST_SAVED_LISTS_TOOL = {
+  name: "list_saved_lists",
+  description:
+    "List all of the user's saved lead lists (read-only), each with its full set of saved leads. " +
+    "Use this when the user asks what they've already saved, or which lists exist.",
+  inputSchema: { type: "object", properties: {} },
+}
+
+const GET_SAVED_LIST_TOOL = {
+  name: "get_saved_list",
+  description: "Get one saved lead list by ID, including its full set of saved leads (read-only).",
+  inputSchema: {
+    type: "object",
+    properties: {
+      list_id: {
+        type: "string",
+        description: "The saved list's ID, from list_saved_lists or a search_leads save_to_list response.",
+      },
+    },
+    required: ["list_id"],
+  },
+}
+
 function requireApiKey() {
   if (!API_KEY) {
     throw new Error(
@@ -145,13 +168,37 @@ async function callListIndustries() {
   return body
 }
 
+async function callListSavedLists() {
+  requireApiKey()
+  const url = new URL("/v1/search-leads/lists", API_BASE_URL)
+  const res = await fetch(url, { headers: { Authorization: `Bearer ${API_KEY}` } })
+  const body = await res.json().catch(() => ({}))
+  if (!res.ok) {
+    throw new Error(body.error || `B2BLeads API request failed with status ${res.status}`)
+  }
+  return body
+}
+
+async function callGetSavedList(args) {
+  requireApiKey()
+  const listId = args?.list_id
+  if (!listId) throw new Error("list_id is required")
+  const url = new URL(`/v1/search-leads/lists/${encodeURIComponent(listId)}`, API_BASE_URL)
+  const res = await fetch(url, { headers: { Authorization: `Bearer ${API_KEY}` } })
+  const body = await res.json().catch(() => ({}))
+  if (!res.ok) {
+    throw new Error(body.error || `B2BLeads API request failed with status ${res.status}`)
+  }
+  return body
+}
+
 const server = new Server(
   { name: "b2bleads-mcp", version: "1.0.0" },
   { capabilities: { tools: {} } }
 )
 
 server.setRequestHandler(ListToolsRequestSchema, async () => ({
-  tools: [SEARCH_LEADS_TOOL, LIST_INDUSTRIES_TOOL],
+  tools: [SEARCH_LEADS_TOOL, LIST_INDUSTRIES_TOOL, LIST_SAVED_LISTS_TOOL, GET_SAVED_LIST_TOOL],
 }))
 
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
@@ -162,6 +209,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       result = await callSearchLeads(args)
     } else if (name === "list_industries") {
       result = await callListIndustries()
+    } else if (name === "list_saved_lists") {
+      result = await callListSavedLists()
+    } else if (name === "get_saved_list") {
+      result = await callGetSavedList(args)
     } else {
       throw new Error(`Unknown tool: ${name}`)
     }

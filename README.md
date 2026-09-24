@@ -87,6 +87,18 @@ At least one of `q`, `industry`, or `city` is required.
 
 Lists the predefined industry categories usable in `search_leads`'s `industry` filter. Takes no arguments.
 
+### `list_saved_lists`
+
+Lists all of your saved lead lists, each with its full set of saved leads. Read-only. Takes no arguments.
+
+### `get_saved_list`
+
+Gets one saved lead list by ID, with its full set of saved leads. Read-only.
+
+| Parameter  | Type   | Description                                                        |
+| ---------- | ------ | ------------------------------------------------------------------- |
+| `list_id`  | string | The saved list's ID, from `list_saved_lists` or a `search_leads` `save_to_list` response. Required. |
+
 ## Configuration
 
 | Environment variable   | Required | Description                                                        |

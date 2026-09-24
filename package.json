@@ -1,6 +1,6 @@
 {
   "name": "b2bleads-mcp",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "mcpName": "io.github.gtovtya/b2bleads-mcp",
   "description": "MCP server for B2BLeads — real-time B2B company discovery and enrichment as an MCP tool for Claude, Cursor, and other MCP-compatible agents.",
   "type": "module",

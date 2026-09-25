@@ -132,6 +132,24 @@ const GET_SAVED_LIST_TOOL = {
   },
 }
 
+const FIND_EMAIL_TOOL = {
+  name: "find_email",
+  description:
+    "Look up a best-effort contact email for a single business website (checks the homepage and common contact pages). " +
+    "Use this for one specific website, e.g. from a saved list or CSV, rather than re-running search_leads. " +
+    "May return a null email if none could be found; this tool never fabricates an address.",
+  inputSchema: {
+    type: "object",
+    properties: {
+      website: {
+        type: "string",
+        description: "The business website URL to look up a contact email for, e.g. \"https://example.com\".",
+      },
+    },
+    required: ["website"],
+  },
+}
+
 function requireApiKey() {
   if (!API_KEY) {
     throw new Error(
@@ -192,13 +210,27 @@ async function callGetSavedList(args) {
   return body
 }
 
+async function callFindEmail(args) {
+  requireApiKey()
+  const website = args?.website
+  if (!website) throw new Error("website is required")
+  const url = new URL("/v1/search-leads/find-email", API_BASE_URL)
+  url.searchParams.set("website", website)
+  const res = await fetch(url, { headers: { Authorization: `Bearer ${API_KEY}` } })
+  const body = await res.json().catch(() => ({}))
+  if (!res.ok) {
+    throw new Error(body.error || `B2BLeads API request failed with status ${res.status}`)
+  }
+  return body
+}
+
 const server = new Server(
-  { name: "b2bleads-mcp", version: "1.0.0" },
+  { name: "b2bleads-mcp", version: "1.3.0" },
   { capabilities: { tools: {} } }
 )
 
 server.setRequestHandler(ListToolsRequestSchema, async () => ({
-  tools: [SEARCH_LEADS_TOOL, LIST_INDUSTRIES_TOOL, LIST_SAVED_LISTS_TOOL, GET_SAVED_LIST_TOOL],
+  tools: [SEARCH_LEADS_TOOL, LIST_INDUSTRIES_TOOL, LIST_SAVED_LISTS_TOOL, GET_SAVED_LIST_TOOL, FIND_EMAIL_TOOL],
 }))
 
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
@@ -213,6 +245,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       result = await callListSavedLists()
     } else if (name === "get_saved_list") {
       result = await callGetSavedList(args)
+    } else if (name === "find_email") {
+      result = await callFindEmail(args)
     } else {
       throw new Error(`Unknown tool: ${name}`)
     }

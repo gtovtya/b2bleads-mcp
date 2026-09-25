@@ -99,6 +99,14 @@ Gets one saved lead list by ID, with its full set of saved leads. Read-only.
 | ---------- | ------ | ------------------------------------------------------------------- |
 | `list_id`  | string | The saved list's ID, from `list_saved_lists` or a `search_leads` `save_to_list` response. Required. |
 
+### `find_email`
+
+Looks up a best-effort contact email for a single business website (checks the homepage and common contact pages). Use this for one specific website rather than re-running `search_leads`. Requires a Business/Premium plan; may return a `null` email if none is found.
+
+| Parameter | Type   | Description                                                        |
+| --------- | ------ | ------------------------------------------------------------------- |
+| `website` | string | The business website URL to look up, e.g. `https://example.com`. Required. |
+
 ## Configuration
 
 | Environment variable   | Required | Description                                                        |

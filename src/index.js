@@ -303,7 +303,7 @@ async function callFindEmail(args) {
 }
 
 const server = new Server(
-  { name: "b2bleads-mcp", version: "1.4.0" },
+  { name: "b2bleads-mcp", version: "1.4.1" },
   { capabilities: { tools: {} } }
 )
 

@@ -103,6 +103,66 @@ const SEARCH_LEADS_TOOL = {
   },
 }
 
+const SEARCH_LEADS_ADVANCED_TOOL = {
+  name: "search_leads_advanced",
+  description:
+    "⚠️ ELEVATED COST: consumes 9x the quota of a single search_leads call. Only use this when the user " +
+    "explicitly wants more results than a regular search_leads call returned for one city, or asks to " +
+    "exhaustively cover a city — never as a default or first attempt; always try search_leads first. " +
+    "Tiles the given city into a 3x3 grid of sub-searches server-side to go beyond the normal ~20-60 " +
+    "result ceiling and return up to ~180 deduplicated businesses in one city. Requires an exact city " +
+    "name only (not the free-text query or industry) — passing a full sentence instead of a city name " +
+    "can cause it to geocode the wrong place and return zero results. Does not support pagination. " +
+    "Read-only: it never saves, creates, updates, or deletes leads.",
+  inputSchema: {
+    type: "object",
+    properties: {
+      q: {
+        type: "string",
+        description: "Free-text search query, e.g. \"construction companies\". Optional if industry is given.",
+      },
+      industry: {
+        type: "string",
+        enum: INDUSTRIES,
+        description: "Industry filter. One of the predefined categories.",
+      },
+      city: {
+        type: "string",
+        description:
+          "City or region to search in, e.g. \"Berlin\" or \"Austin, TX\". Must be ONLY the city name — " +
+          "do not pass the free-text query or industry words here, or the city may be geocoded incorrectly " +
+          "(e.g. resolving to a same-named town in the wrong country).",
+      },
+      min_rating: {
+        type: "number",
+        description: "Minimum rating (0-5) a business must have to be included.",
+      },
+      has_website: {
+        type: "boolean",
+        description: "Only return businesses that have a website.",
+      },
+      verified_only: {
+        type: "boolean",
+        description: "Only return businesses with a verified listing.",
+      },
+      open_now: {
+        type: "boolean",
+        description: "Only return businesses that are currently open.",
+      },
+      price_level: {
+        type: "string",
+        enum: ["budget", "moderate", "expensive", "luxury"],
+        description: "Filter by price level.",
+      },
+      lang: {
+        type: "string",
+        description: "Result language as a BCP-47 tag, e.g. \"en\" or \"pt-BR\".",
+      },
+    },
+    required: ["city"],
+  },
+}
+
 const LIST_INDUSTRIES_TOOL = {
   name: "list_industries",
   description: "List the predefined industry categories that can be used as the `industry` filter in search_leads.",
@@ -176,6 +236,24 @@ async function callSearchLeads(args) {
   return body
 }
 
+async function callSearchLeadsAdvanced(args) {
+  requireApiKey()
+  const url = new URL("/v1/search-leads/expanded", API_BASE_URL)
+  for (const [key, value] of Object.entries(args || {})) {
+    if (value === undefined || value === null || value === "") continue
+    url.searchParams.set(key, String(value))
+  }
+
+  const res = await fetch(url, {
+    headers: { Authorization: `Bearer ${API_KEY}` },
+  })
+  const body = await res.json().catch(() => ({}))
+  if (!res.ok) {
+    throw new Error(body.error || `B2BLeads API request failed with status ${res.status}`)
+  }
+  return body
+}
+
 async function callListIndustries() {
   const url = new URL("/v1/search-leads/industries", API_BASE_URL)
   const res = await fetch(url)
@@ -225,12 +303,12 @@ async function callFindEmail(args) {
 }
 
 const server = new Server(
-  { name: "b2bleads-mcp", version: "1.3.0" },
+  { name: "b2bleads-mcp", version: "1.4.0" },
   { capabilities: { tools: {} } }
 )
 
 server.setRequestHandler(ListToolsRequestSchema, async () => ({
-  tools: [SEARCH_LEADS_TOOL, LIST_INDUSTRIES_TOOL, LIST_SAVED_LISTS_TOOL, GET_SAVED_LIST_TOOL, FIND_EMAIL_TOOL],
+  tools: [SEARCH_LEADS_TOOL, SEARCH_LEADS_ADVANCED_TOOL, LIST_INDUSTRIES_TOOL, LIST_SAVED_LISTS_TOOL, GET_SAVED_LIST_TOOL, FIND_EMAIL_TOOL],
 }))
 
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
@@ -239,6 +317,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     let result
     if (name === "search_leads") {
       result = await callSearchLeads(args)
+    } else if (name === "search_leads_advanced") {
+      result = await callSearchLeadsAdvanced(args)
     } else if (name === "list_industries") {
       result = await callListIndustries()
     } else if (name === "list_saved_lists") {

@@ -83,6 +83,22 @@ Search for companies and business contacts in real time.
 
 At least one of `q`, `industry`, or `city` is required.
 
+### `search_leads_advanced`
+
+⚠️ **Elevated cost: consumes 9x the quota of a single `search_leads` call.** Only use this when you need more results than `search_leads` returned for a specific city, or need to exhaustively cover a city — not as a default or first attempt. Tiles the city into a 3x3 grid of sub-searches server-side to go beyond the normal ~20-60 result ceiling, returning up to ~180 deduplicated businesses in one call. Does not support pagination.
+
+| Parameter       | Type      | Description                                                                 |
+| --------------- | --------- | ----------------------------------------------------------------------------- |
+| `q`              | string    | Free-text query, e.g. `"construction companies"`. Optional if `industry` is given. |
+| `industry`       | string    | One of the categories from `list_industries`.                                |
+| `city`           | string    | **Required.** City or region to search in — must be only the city name (e.g. `"Lyon"`), not the full search phrase, or the wrong place may be geocoded. |
+| `min_rating`     | number    | Minimum rating (0-5).                                                        |
+| `has_website`    | boolean   | Only businesses with a website.                                              |
+| `verified_only`  | boolean   | Only businesses with a verified listing.                                     |
+| `open_now`       | boolean   | Only businesses currently open.                                              |
+| `price_level`    | string    | `budget` \| `moderate` \| `expensive` \| `luxury`                            |
+| `lang`           | string    | Result language, BCP-47 tag (e.g. `en`, `pt-BR`).                            |
+
 ### `list_industries`
 
 Lists the predefined industry categories usable in `search_leads`'s `industry` filter. Takes no arguments.

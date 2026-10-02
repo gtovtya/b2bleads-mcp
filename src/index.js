@@ -172,8 +172,9 @@ const LIST_INDUSTRIES_TOOL = {
 const LIST_SAVED_LISTS_TOOL = {
   name: "list_saved_lists",
   description:
-    "List all of the user's saved lead lists (read-only), each with its full set of saved leads. " +
-    "Use this when the user asks what they've already saved, or which lists exist.",
+    "List all of the user's saved lead lists (read-only) — id, name, and lead count for each, not the " +
+    "leads themselves. Use this when the user asks what they've already saved, or which lists exist. " +
+    "Call get_saved_list with a list's id to fetch its full leads.",
   inputSchema: { type: "object", properties: {} },
 }
 
@@ -218,6 +219,44 @@ function requireApiKey() {
   }
 }
 
+const REQUEST_TIMEOUT_MS = 20_000
+const MAX_RETRIES = 2 // total attempts = 1 + MAX_RETRIES
+const RETRY_BASE_DELAY_MS = 500
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+// MCP clients (Claude Desktop, Cursor, etc.) spawn this process once and keep
+// it alive for the whole session — a single hung or dropped connection to the
+// B2BLeads API would otherwise leave that tool call stuck forever with no
+// built-in client-side timeout. Retries only cover transient network failures
+// (timeout, DNS, connection reset) — an HTTP error response from the API
+// (4xx/5xx) is returned to the model as-is, not retried, since repeating a
+// request that the server actively rejected (bad input, invalid key, quota
+// exceeded) wastes the user's quota without changing the outcome.
+async function fetchWithRetry(url, options) {
+  let lastErr
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
+    try {
+      return await fetch(url, { ...options, signal: controller.signal })
+    } catch (err) {
+      lastErr = err
+      if (attempt < MAX_RETRIES) await sleep(RETRY_BASE_DELAY_MS * 2 ** attempt)
+    } finally {
+      clearTimeout(timeout)
+    }
+  }
+  const timedOut = lastErr?.name === "AbortError"
+  throw new Error(
+    timedOut
+      ? `B2BLeads API request timed out after ${REQUEST_TIMEOUT_MS / 1000}s (tried ${MAX_RETRIES + 1} times).`
+      : `B2BLeads API request failed: ${lastErr?.message || lastErr} (tried ${MAX_RETRIES + 1} times).`
+  )
+}
+
 async function callSearchLeads(args) {
   requireApiKey()
   const url = new URL("/v1/search-leads", API_BASE_URL)
@@ -226,7 +265,7 @@ async function callSearchLeads(args) {
     url.searchParams.set(key, String(value))
   }
 
-  const res = await fetch(url, {
+  const res = await fetchWithRetry(url, {
     headers: { Authorization: `Bearer ${API_KEY}` },
   })
   const body = await res.json().catch(() => ({}))
@@ -244,7 +283,7 @@ async function callSearchLeadsAdvanced(args) {
     url.searchParams.set(key, String(value))
   }
 
-  const res = await fetch(url, {
+  const res = await fetchWithRetry(url, {
     headers: { Authorization: `Bearer ${API_KEY}` },
   })
   const body = await res.json().catch(() => ({}))
@@ -256,7 +295,7 @@ async function callSearchLeadsAdvanced(args) {
 
 async function callListIndustries() {
   const url = new URL("/v1/search-leads/industries", API_BASE_URL)
-  const res = await fetch(url)
+  const res = await fetchWithRetry(url)
   const body = await res.json().catch(() => ({}))
   if (!res.ok) {
     throw new Error(body.error || `B2BLeads API request failed with status ${res.status}`)
@@ -267,7 +306,7 @@ async function callListIndustries() {
 async function callListSavedLists() {
   requireApiKey()
   const url = new URL("/v1/search-leads/lists", API_BASE_URL)
-  const res = await fetch(url, { headers: { Authorization: `Bearer ${API_KEY}` } })
+  const res = await fetchWithRetry(url, { headers: { Authorization: `Bearer ${API_KEY}` } })
   const body = await res.json().catch(() => ({}))
   if (!res.ok) {
     throw new Error(body.error || `B2BLeads API request failed with status ${res.status}`)
@@ -280,7 +319,7 @@ async function callGetSavedList(args) {
   const listId = args?.list_id
   if (!listId) throw new Error("list_id is required")
   const url = new URL(`/v1/search-leads/lists/${encodeURIComponent(listId)}`, API_BASE_URL)
-  const res = await fetch(url, { headers: { Authorization: `Bearer ${API_KEY}` } })
+  const res = await fetchWithRetry(url, { headers: { Authorization: `Bearer ${API_KEY}` } })
   const body = await res.json().catch(() => ({}))
   if (!res.ok) {
     throw new Error(body.error || `B2BLeads API request failed with status ${res.status}`)
@@ -294,7 +333,7 @@ async function callFindEmail(args) {
   if (!website) throw new Error("website is required")
   const url = new URL("/v1/search-leads/find-email", API_BASE_URL)
   url.searchParams.set("website", website)
-  const res = await fetch(url, { headers: { Authorization: `Bearer ${API_KEY}` } })
+  const res = await fetchWithRetry(url, { headers: { Authorization: `Bearer ${API_KEY}` } })
   const body = await res.json().catch(() => ({}))
   if (!res.ok) {
     throw new Error(body.error || `B2BLeads API request failed with status ${res.status}`)
@@ -303,7 +342,7 @@ async function callFindEmail(args) {
 }
 
 const server = new Server(
-  { name: "b2bleads-mcp", version: "1.4.1" },
+  { name: "b2bleads-mcp", version: "1.5.0" },
   { capabilities: { tools: {} } }
 )
 

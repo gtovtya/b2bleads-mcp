@@ -105,7 +105,7 @@ Lists the predefined industry categories usable in `search_leads`'s `industry` f
 
 ### `list_saved_lists`
 
-Lists all of your saved lead lists, each with its full set of saved leads. Read-only. Takes no arguments.
+Lists all of your saved lead lists — id, name, and lead count for each, not the leads themselves. Read-only. Takes no arguments. Use `get_saved_list` to fetch one list's full leads.
 
 ### `get_saved_list`
 

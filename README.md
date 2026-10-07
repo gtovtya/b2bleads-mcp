@@ -138,6 +138,8 @@ Each search consumes quota from your B2BLeads plan — see [pricing](https://b2b
 
 - [B2BLeads website](https://b2bleadsapi.com)
 - [REST API documentation](https://b2bleadsapi.com/docs)
+- [This package's integration page](https://b2bleadsapi.com/plugins/nodejs) — setup notes specific to a plain Node.js MCP client
+- [Claude Desktop / Claude Code integration page](https://b2bleadsapi.com/plugins/claude)
 - [Terms of Use](https://b2bleadsapi.com/terms)
 - [Privacy Policy](https://b2bleadsapi.com/privacy)
 
